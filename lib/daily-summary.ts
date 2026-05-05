@@ -136,8 +136,6 @@ export async function buildDailyOperationsSummary(
     `📅 Сводка за ${targetDate}`,
     '',
     `📊 ${rows.length} операций · ${fieldAreas.size} полей · ${fmtArea(totalHa)}`,
-    '',
-    SEP,
   ];
 
   for (const fieldId of fieldOrder) {
@@ -145,7 +143,7 @@ export async function buildDailyOperationsSummary(
     const info = fieldAreas.get(fieldId)!;
 
     lines.push('');
-    lines.push(`🗺 ${info.name} · ${fmtArea(info.ha)}`);
+    lines.push(`🗺 Поле: ${info.name} · ${fmtArea(info.ha)}`);
 
     for (const op of ops) {
       const sl = fmtStatus(op.status);
@@ -154,8 +152,6 @@ export async function buildDailyOperationsSummary(
     }
   }
 
-  lines.push('');
-  lines.push(SEP);
   lines.push('');
   lines.push('📌 Итого:');
   for (const [type, count] of Object.entries(typeCounts)) {
