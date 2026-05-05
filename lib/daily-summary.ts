@@ -50,6 +50,7 @@ type OperationRow = {
   field_name: string;
   area_ha: string;
   status: string | null;
+  notes: string | null;
 };
 
 /**
@@ -71,7 +72,8 @@ export async function buildDailyOperationsSummary(
       o.title,
       f.name        AS field_name,
       f.area_ha::text,
-      o.status
+      o.status,
+      o.notes
     FROM  operations o
     JOIN  fields f ON f.id = o.field_id
     WHERE o.operation_date = $1
@@ -102,9 +104,11 @@ export async function buildDailyOperationsSummary(
     ...Object.entries(typeCounts).map(([t, c]) => `  • ${opLabel(t)}: ${c}`),
     '',
     'Операции:',
-    ...rows.map(r => {
+    ...rows.flatMap(r => {
       const status = r.status ? ` · ${r.status}` : '';
-      return `  [${r.field_name}] ${opLabel(r.operation_type)} · ${r.operation_date}${status}`;
+      const lines = [`  [${r.field_name}] ${opLabel(r.operation_type)} · ${r.operation_date}${status}`];
+      if (r.notes?.trim()) lines.push(`    Примечание: ${r.notes.trim()}`);
+      return lines;
     }),
   ];
 

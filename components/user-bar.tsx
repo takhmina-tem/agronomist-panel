@@ -1,11 +1,6 @@
 import Link from 'next/link';
-import { Settings } from 'lucide-react';
 import { LogoutButton } from '@/components/logout-button';
 
-/**
- * Top navigation bar shown on all protected pages.
- * Server Component — receives session data from the (app) layout.
- */
 export function UserBar({ login }: { login: string }) {
   const initial = login[0]?.toUpperCase() ?? '?';
 
@@ -26,7 +21,6 @@ export function UserBar({ login }: { login: string }) {
 
         {/* Right — user indicator + logout */}
         <div className="flex items-center gap-3">
-          {/* User avatar chip */}
           <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">
               {initial}
@@ -35,14 +29,6 @@ export function UserBar({ login }: { login: string }) {
               {login}
             </span>
           </div>
-
-          <Link
-            href="/settings/telegram"
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-            title="Настройки Telegram"
-          >
-            <Settings size={16} />
-          </Link>
 
           <LogoutButton />
         </div>
