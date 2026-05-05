@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Settings } from 'lucide-react';
 import { LogoutButton } from '@/components/logout-button';
 
 /**
@@ -34,6 +35,14 @@ export function UserBar({ login }: { login: string }) {
               {login}
             </span>
           </div>
+
+          <Link
+            href="/settings/telegram"
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            title="Настройки Telegram"
+          >
+            <Settings size={16} />
+          </Link>
 
           <LogoutButton />
         </div>

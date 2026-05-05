@@ -14,7 +14,8 @@
     "db:seed": "node scripts/seed.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:create-admin": "node scripts/create-admin-user.mjs"
+    "db:create-admin": "node scripts/create-admin-user.mjs",
+    "db:migrate:telegram": "node scripts/apply-telegram-migration.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

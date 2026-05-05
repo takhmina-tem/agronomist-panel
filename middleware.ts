@@ -8,6 +8,7 @@ const PUBLIC_PREFIXES = [
   '/login',
   '/api/auth',  // login + logout endpoints
   '/api/health',
+  '/api/cron',  // Vercel cron scheduler — protected by CRON_SECRET inside the route
 ];
 
 // ── Middleware ────────────────────────────────────────────────────────────────
