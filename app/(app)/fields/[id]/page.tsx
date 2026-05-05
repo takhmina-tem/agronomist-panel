@@ -6,6 +6,7 @@ import { FieldNpkChart, FieldIrrigationChart, FieldDiseaseChart, FieldProtection
 import { Badge, Card, SectionTitle, Shell } from '@/components/ui';
 import { getFieldAnalytics, getFieldById } from '@/lib/data';
 import { getFarmCoordinates, fetchSeasonPrecipitation } from '@/lib/weather';
+import { fetchFieldClimatePrecipitation, isFieldClimateConfigured } from '@/lib/fieldclimate';
 import type { IrrigationEvent, WaterBalancePoint } from '@/lib/types';
 
 // ── Water-balance helpers ─────────────────────────────────────────────────────
@@ -79,7 +80,9 @@ export default async function FieldPage({ params }: { params: { id: string } }) 
     getFieldById(id),
     getFieldAnalytics(id),
     canFetch
-      ? fetchSeasonPrecipitation(coords.lat, coords.lon, seasonStart, seasonEnd)
+      ? (isFieldClimateConfigured()
+          ? fetchFieldClimatePrecipitation(seasonStart, seasonEnd)
+          : fetchSeasonPrecipitation(coords.lat, coords.lon, seasonStart, seasonEnd))
       : Promise.resolve([]),
   ]);
 

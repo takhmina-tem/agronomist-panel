@@ -14,6 +14,7 @@ import {
   type GtkResult,
   type WmoIconName,
 } from '@/lib/weather';
+import { fetchFieldClimatePrecipitation } from '@/lib/fieldclimate';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,19 @@ function formatForecastDate(iso: string, isFirst: boolean): string {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function CurrentCard({ c }: { c: CurrentWeather }) {
+function CurrentCard({
+  c,
+  precipOverride,
+  precipSource,
+}: {
+  c: CurrentWeather;
+  precipOverride?: number;
+  precipSource?: string;
+}) {
+  const precipValue = precipOverride ?? c.precipitation;
+  const precipLabel = precipSource
+    ? `мм осадки (${precipSource})`
+    : 'мм осадки';
   return (
     <Card className="bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 text-white">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -67,7 +80,7 @@ function CurrentCard({ c }: { c: CurrentWeather }) {
           </div>
           <div className="flex items-center gap-2 text-white/80">
             <CloudRain size={16} />
-            <span className="text-sm">{c.precipitation} мм осадки</span>
+            <span className="text-sm">{precipValue} {precipLabel}</span>
           </div>
         </div>
       </div>
@@ -212,6 +225,12 @@ export default async function WeatherPage() {
   let gtk:      GtkResult | null = null;
   let fetchError: string | null  = null;
 
+  // Fetch FieldClimate precipitation in parallel with Open-Meteo.
+  // Covers today in UTC; we include yesterday to handle UTC vs local timezone edge cases.
+  const todayUtc = new Date().toISOString().split('T')[0];
+  const yesterdayUtc = new Date(Date.now() - 86_400_000).toISOString().split('T')[0];
+  const fcPrecipPromise = fetchFieldClimatePrecipitation(yesterdayUtc, todayUtc);
+
   try {
     [forecast, gtk] = await Promise.all([
       fetchWeatherForecast(coords.lat, coords.lon),
@@ -220,6 +239,24 @@ export default async function WeatherPage() {
   } catch (e) {
     fetchError = e instanceof Error ? e.message : 'Не удалось загрузить данные';
   }
+
+  // fetchFieldClimatePrecipitation never throws — returns [] on any error
+  const fcPrecip = await fcPrecipPromise;
+  const fcMap    = new Map(fcPrecip.map(p => [p.date, p.precipMm]));
+  const hasFc    = fcPrecip.length > 0;
+
+  // Override precipitation in daily forecast where FieldClimate has measured data.
+  // SprayCard always uses the original Open-Meteo current reading (checks c.precipitation > 0).
+  const fcTodayPrecip  = hasFc ? (fcMap.get(todayUtc) ?? fcMap.get(yesterdayUtc) ?? null) : null;
+  const displayDaily   = forecast?.daily.map(day => {
+    const fc = fcMap.get(day.date);
+    return fc !== undefined ? { ...day, precipSum: fc } : day;
+  }) ?? [];
+
+  const precipSource     = hasFc ? 'FieldClimate' : undefined;
+  const weatherDataLabel = hasFc
+    ? `${coords.lat}°N, ${coords.lon}°E · Open-Meteo · осадки: FieldClimate · обновление раз в час`
+    : `${coords.lat}°N, ${coords.lon}°E · Open-Meteo · обновление раз в час`;
 
   return (
     <Shell>
@@ -231,7 +268,7 @@ export default async function WeatherPage() {
         <SectionTitle
           eyebrow="Погода"
           title="Аксу"
-          description={`${coords.lat}°N, ${coords.lon}°E · Open-Meteo · обновление раз в час`}
+          description={weatherDataLabel}
         />
 
         {fetchError && (
@@ -248,11 +285,16 @@ export default async function WeatherPage() {
 
         {forecast && (
           <>
-            <CurrentCard c={forecast.current} />
+            {/* precipOverride: FieldClimate today total; SprayCard stays on Open-Meteo */}
+            <CurrentCard
+              c={forecast.current}
+              precipOverride={fcTodayPrecip ?? undefined}
+              precipSource={fcTodayPrecip !== null ? precipSource : undefined}
+            />
 
             <section className="space-y-4">
               <SectionTitle title="Прогноз на 7 дней" />
-              <ForecastStrip days={forecast.daily} />
+              <ForecastStrip days={displayDaily.length > 0 ? displayDaily : forecast.daily} />
             </section>
 
             <SprayCard c={forecast.current} />

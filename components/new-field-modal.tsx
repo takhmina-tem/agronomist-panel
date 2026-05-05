@@ -146,10 +146,10 @@ export function NewFieldModal() {
                 </label>
                 <input
                   type="number"
-                  min="0.1"
-                  step="0.1"
+                  min="0.01"
+                  step="0.01"
                   className={inputCls}
-                  placeholder="100"
+                  placeholder="12.5"
                   value={areaHa}
                   onChange={e => setAreaHa(e.target.value)}
                 />
